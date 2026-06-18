@@ -58,17 +58,40 @@ document.addEventListener('DOMContentLoaded', () => {
     revealEls.forEach(el => el.classList.add('in-view'));
   }
 
-  // Contact form (static demo — no backend)
+  // Contact form — Netlify Forms AJAX submission
   const form = document.querySelector('#contact-form');
   if (form) {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const note = document.querySelector('#form-note');
-      if (note) {
-        note.textContent = 'Vielen Dank. Ihre Nachricht wurde erfasst — wir melden uns zeitnah zurück.';
-        note.classList.add('visible');
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(new FormData(form)).toString(),
+        });
+        if (note) {
+          if (res.ok) {
+            note.textContent = 'Vielen Dank. Ihre Nachricht wurde gesendet — wir melden uns zeitnah zurück.';
+            note.style.borderLeftColor = 'var(--gold)';
+            form.reset();
+          } else {
+            note.textContent = 'Beim Senden ist ein Fehler aufgetreten. Bitte schreiben Sie uns direkt an info@upsiderealestate.de.';
+            note.style.borderLeftColor = '#c0392b';
+          }
+          note.classList.add('visible');
+        }
+      } catch {
+        if (note) {
+          note.textContent = 'Keine Verbindung. Bitte schreiben Sie uns direkt an info@upsiderealestate.de.';
+          note.style.borderLeftColor = '#c0392b';
+          note.classList.add('visible');
+        }
+      } finally {
+        if (btn) btn.disabled = false;
       }
-      form.reset();
     });
   }
 });
